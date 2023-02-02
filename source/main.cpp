@@ -5,9 +5,9 @@
 #include <vector>
 #include <algorithm>
 #include <stdexcept>
-#include <cctype>
 
 #include "utils.hpp"
+
 
 struct Coordinate {
     std::string index;
@@ -49,36 +49,27 @@ std::string lookup_table(const std::vector<std::vector<std::string>> &table, Coo
         throw std::invalid_argument("No such column");
     }
 
-    size_t header_index = std::distance(table[0].begin(), header_iterator);
-    if (record.size() <= header_index) {
-        throw std::invalid_argument("No cell with this header in this row");
-    }
-    
-    return record[header_index];
+    return record[std::distance(table[0].begin(), header_iterator)];
 }
 
 Coordinate parse_argument(std::string argument) {
     // Implementation is based on: 
     // 1) only digits used for indices 
     // 2) names do not contain digits
-    std::string header;
-    std::string index;
+    Coordinate cell;
+
     size_t position = 0;
     while (!isdigit(argument[position])) {
-        header.push_back(argument[position]);
+        cell.header.push_back(argument[position]);
         position++;
     }
     while (isdigit(argument[position])) {
-        index.push_back(argument[position]);
+        cell.index.push_back(argument[position]);
         position++;
     }
-    if (argument.size() != position || index == "" || header == "") {
+    if (argument.size() != position || cell.index == "" || cell.header == "") {
         throw std::invalid_argument("Invalid expression argument");
     }
-
-    Coordinate cell;
-    cell.index = index;
-    cell.header = header;
 
     return cell;
 }
@@ -180,7 +171,13 @@ int main(int argc, char const *argv[]) {
         table.push_back(split(line, ','));
     }
 
-    format_table(table);
+    try {
+        format_table(table);
+    }
+    catch (std::invalid_argument const &ex){
+        std::cout << ex.what() << std::endl;
+        return -1;
+    }
 
     print_table(table);
     
